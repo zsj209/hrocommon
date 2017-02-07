@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrocloud.common.dao.CommCityMapper">
+	<resultMap id="BaseResultMap" type="com.hrocloud.common.model.CommCityResp">
+		<id column="id" jdbcType="INTEGER" property="id" />
+		<result column="create_by" jdbcType="INTEGER" property="createBy" />
+		<result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
+		<result column="update_by" jdbcType="INTEGER" property="updateBy" />
+		<result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+		<result column="company_id" jdbcType="INTEGER" property="companyId" />
+		<result column="city_code" jdbcType="VARCHAR" property="cityCode" />
+		<result column="city_name" jdbcType="VARCHAR" property="cityName" />
+		<result column="city_pid" jdbcType="VARCHAR" property="cityPid" />
+		<result column="city_type" jdbcType="VARCHAR" property="cityType" />
+		<result column="comment" jdbcType="VARCHAR" property="comment" />
+	</resultMap>
+	<sql id="Base_Column_List">
+		id, create_time, company_id,city_code,<!-- create_by, create_time, update_by, update_time, company_id, -->
+		city_name, city_pid,
+		city_type, comment
+	</sql>
+
+	<!-- 是否删除 -->
+	<sql id="Where_column_isdel">
+		and delete_flag=0
+	</sql>
+
+	<!-- 根据一组id查询 -->
+	<select id="selDataListByIds" 
+		resultMap="BaseResultMap">
+		select
+		<include refid="Base_Column_List" />
+		from comm_city_info
+		<if test="selList!=null and selList!=''">
+		 where id in (${selList})
+		</if>
+		
+		
+	</select>
+		<!-- 根据一组codes查询 -->
+	<select id="selDataListByCodes" 
+		resultMap="BaseResultMap">
+		select
+		<include refid="Base_Column_List" />
+		from comm_city_info where city_code in (${selList})
+		
+	</select>
+	<select id="selectCityListByColumnPage" parameterType="com.hrocloud.common.model.CommCity"
+		resultMap="BaseResultMap">
+		select
+		<include refid="Base_Column_List" />
+		from comm_city_info
+		where delete_flag=0 and city_pid!=1000
+		<if test="commCity.id!=null and commCity.id!='' and commCity.id!=0">
+			and id=#{commCity.id}
+		</if>
+		<if test="commCity.cityCode != null and commCity.cityCode!=''">
+			and city_code like '%${commCity.cityCode,jdbcType=VARCHAR}%' 
+		</if>
+		<if test="commCity.cityName!=null and commCity.cityName!=''">
+		 	and city_name like '%${commCity.cityName}%'
+		</if>
+		
+		<if test="commCity.cityPid != null and commCity.cityPid!=''">
+			and city_pid = #{commCity.cityPid}
+		</if>
+		<if test="commCity.cityType != null and commCity.cityType!=''">
+			and city_type = #{commCity.cityType,jdbcType=VARCHAR}
+		</if>
+	</select>
+	<!-- 省市区节点点击进入省市区 -->
+	<select id="selectAllCityListByColumnPage" resultMap="BaseResultMap">
+		select
+		<include refid="Base_Column_List" />
+		from comm_city_info
+		where delete_flag=0	<!--  and city_pid!='cty000' -->
+		<if test="cityPid!=1000">
+			<if test="ids!=null and ids!='' ">
+					and id in(${ids})
+			</if>
+			<if test="cityCode != null and cityCode!=''">
+					and city_code  like '%${cityCode}%'
+			</if>
+			<if test="cityName!=null and cityName!=''">
+			 	and city_name like '%${cityName}%'
+			</if>
+			<if test="types==2">
+				<if test="cityPid!=null and cityPid!=''">
+					and (city_pid = #{cityPid} or id=#{cityPid})
+				</if>
+				
+			</if>
+			<if test="types!=2">
+				<if test="cityPid != null and cityPid!=''">
+					<if test="cityPid!=1000">
+						and (city_pid = #{cityPid} or id=#{cityPid})
+					</if>
+				</if>
+			</if>
+			
+			<if test="cityType != null and cityType!=''">
+				and city_type = #{cityType,jdbcType=VARCHAR}
+			</if>
+		</if>
+		 order by city_code asc
+	</select>
+	<!-- 根据id查询城市 -->
+	<select id="selectCityById" parameterType="int" resultMap="BaseResultMap">
+		select
+		<include refid="Base_Column_List" />
+		from comm_city_info
+		where id=#{id} <!-- and delete_flag=0 -->
+	</select>
+	<!-- 删除 -->
+	<delete id="deleteCityByPrimaryKey" >
+		update comm_city_info set delete_flag=1 where id in (${ids})
+	</delete>
+	<insert id="insertCity" parameterType="com.hrocloud.common.model.CommCity"
+		useGeneratedKeys="true" keyProperty="id">
+		insert into comm_city_info (id, create_by, create_time,
+		company_id,city_code,
+		city_name, city_pid, city_type,
+		city_isvalid, comment
+		)
+		values (#{id,jdbcType=INTEGER}, #{createBy,jdbcType=INTEGER}, now(),
+		#{companyId,jdbcType=INTEGER},#{cityCode,jdbcType=VARCHAR},
+		#{cityName,jdbcType=VARCHAR}, #{cityPid,jdbcType=INTEGER}, #{cityType,jdbcType=VARCHAR},
+		#{cityIsvalid,jdbcType=TINYINT}, #{comment,jdbcType=VARCHAR}
+		)
+	</insert>
+	<update id="updateCityByPrimaryKey" parameterType="com.hrocloud.common.model.CommCity">
+		update comm_city_info
+		set update_by = #{updateBy,jdbcType=INTEGER},
+		update_time =now(),
+		company_id=#{companyId,jdbcType=INTEGER},
+		city_code=#{cityCode,jdbcType=VARCHAR},
+		city_name = #{cityName,jdbcType=VARCHAR},
+		city_pid = #{cityPid,jdbcType=INTEGER},
+		city_type = #{cityType,jdbcType=VARCHAR},
+		comment = #{comment,jdbcType=VARCHAR}
+		where id = #{id,jdbcType=INTEGER}
+	</update>
+	<!-- 判断是否存在 -->
+	<select id="queryByCityInfoIsExist" parameterType="java.lang.String"
+		resultType="java.lang.Integer">
+		select count(*) from comm_city_info
+		where city_code=#{cityCode,jdbcType=VARCHAR}
+		and delete_flag=0
+	</select>
+
+	<resultMap id="cityTreeMap" type="com.hrocloud.common.model.CommCityResp">
+		<id column="id" jdbcType="INTEGER" property="id" />
+<!-- 		<result column="city_code" jdbcType="VARCHAR" property="cityCode" />
+ -->		<result column="city_name" jdbcType="VARCHAR" property="cityName" />
+		<result column="city_pid" jdbcType="INTEGER" property="cityPid" />
+		<result column="city_type" jdbcType="VARCHAR" property="cityType" />
+		<collection property="list" column="id"
+			ofType="com.hrocloud.common.model.CommCityResp" select="queryTreeCityList" />
+	</resultMap>
+	<select id="queryTreeCityList" resultMap="cityTreeMap"
+		parameterType="int">
+		select id,city_name,city_pid,city_type from
+		comm_city_info
+		where city_pid=#{id,jdbcType=INTEGER} and delete_flag=0
+	</select>
+	<select id="selectIdByCode" parameterType="java.lang.String" resultMap="BaseResultMap">
+		select 
+		 <include refid="Base_Column_List" />
+		 from comm_city_info where city_code=#{cityCode,jdbcType=VARCHAR}
+	</select>
+	<!-- 根据编码查询所属下级的所属信息 -->
+	<select id="queryChlidrenById"  parameterType="java.lang.Integer" statementType="CALLABLE"  resultMap="BaseResultMap"  >
+		
+		 select 
+		 <include refid="Base_Column_List" />
+		 from comm_city_info 
+		 where FIND_IN_SET(id, queryChildrenAreaInfo(#{cityPid,jdbcType=INTEGER,mode=IN})); 
+	</select>
+
+	<!-- 根据一组id查询所属下级的集合 -->
+	<!-- <select id="selectChilidsByPid" resultMap="BaseResultMap">
+		 select 
+		 <include refid="Base_Column_List" />
+		 from comm_city_info 
+		 where city_pid in ${idList}
+	</select> -->
+   
+
+ 
+</mapper>

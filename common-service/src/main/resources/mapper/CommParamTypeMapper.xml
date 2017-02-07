@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrocloud.common.dao.CommParamTypeMapper">
+  <resultMap id="BaseResultMap" type="com.hrocloud.common.dto.CommParamTypeDTO">
+    <id column="id" jdbcType="INTEGER" property="id" />
+     <result column="create_by" jdbcType="INTEGER" property="createBy" />
+    <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
+    <result column="update_by" jdbcType="INTEGER" property="updateBy" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+    <result column="type_code" jdbcType="VARCHAR" property="typeCode" />
+    <result column="company_id" jdbcType="INTEGER" property="companyId" />
+    <result column="type_name" jdbcType="VARCHAR" property="typeName" />
+    <result column="type_isupdate" jdbcType="TINYINT" property="typeIsupdate" />
+    <result column="comment" jdbcType="VARCHAR" property="comment" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    id, create_time,type_code,type_name, type_isupdate, company_id,<!-- create_by,company_id, create_time, update_by, update_time, -->
+    comment
+  </sql>
+  <sql id="Where_Colunm_list">
+  	<if test="commParamType.id!=null and commParamType.id!='' and commParamType.id!=0">
+  		and id=#{commParamType.id}
+  	</if>
+  	<if test="commParamType.createBy!=null and commParamType.createBy!='' and commParamType.createBy!=0">
+  		and create_by=#{commParamType.createBy}
+  	</if>
+  	
+  	<if test="commParamType.companyId!=null and commParamType.companyId!='' and commParamType.companyId!=0">
+  		and company_id=#{commParamType.companyId}
+  	</if>
+  	<if test="commParamType.typeName!=null and commParamType.typeName!=''">
+  		and type_name like '%${commParamType.typeName}%'  <!--   CONCAT(CONCAT('%', #{commParamType.typeName}),'%')-->
+  	</if>
+  	<if test="commParamType.typeIsupdate!=null and commParamType.typeIsupdate!=''">
+  		and type_isupdate=#{commParamType.typeIsupdate}
+  	</if>
+  	<if test="commParamType.typeCode!=null and commParamType.typeCode!=''">
+  		and type_code=#{commParamType.typeCode}
+  	</if>
+  </sql>
+  <sql id="Isdelete_column">
+  	and delete_flag=0
+  </sql>
+  <select id="selectParamTypeByColumnPage" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from comm_param_type
+    <where>
+    	<include refid="Where_Colunm_list"></include>
+    	<include refid="Isdelete_column"></include>
+    </where>
+  </select>
+  <!-- 根据id查询对象 -->
+  <select id="selectParamTypeById" parameterType="INT" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from comm_param_type
+   	where id=#{id}
+  </select>
+  <!-- 根据一组id查询 -->
+	<select id="selDataListByIds" resultMap="BaseResultMap">
+		select
+		<include refid="Base_Column_List" />
+		from comm_param_type where id in (${selList})
+		
+	</select>
+  <delete id="deleteParamType" parameterType="java.util.List">
+    update comm_param_type set delete_flag=1  where id in (${ids})
+  </delete>
+  <insert id="insertParamType" parameterType="com.hrocloud.common.model.CommParamType" useGeneratedKeys="true" keyProperty="id">
+     insert into comm_param_type (id, create_by, create_time,company_id, 
+      type_code,type_name, type_isupdate, delete_flag, comment)
+    values (#{id,jdbcType=INTEGER}, #{createBy,jdbcType=INTEGER}, now(), 
+       #{companyId,jdbcType=INTEGER}, #{typeCode,jdbcType=VARCHAR},
+      #{typeName,jdbcType=VARCHAR}, #{typeIsupdate,jdbcType=TINYINT}, 0, 
+      #{comment,jdbcType=VARCHAR})
+  </insert>
+ 
+  <update id="updateParamTypeByPrimaryKey" parameterType="com.hrocloud.common.model.CommParamType">
+    update comm_param_type
+    set update_by = #{updateBy,jdbcType=INTEGER},
+      update_time = now(),
+      company_id = #{companyId,jdbcType=INTEGER},
+       type_code=#{typeCode,jdbcType=VARCHAR},
+      type_name = #{typeName,jdbcType=VARCHAR},
+      type_isupdate = #{typeIsupdate,jdbcType=TINYINT},
+      comment = #{comment,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+    <!-- 判断是否存在 -->
+  <select id="queryByParamTypeInfoIsExist" parameterType="com.hrocloud.common.model.CommParamType" resultType="java.lang.Integer">
+  	select count(*) from comm_param_type 
+  		where 
+  		<!--type_name=#{typeName}   and (company_id=100 or company_id=#{companyId})-->
+  		 delete_flag=0 and type_code=#{typeCode}
+  </select>
+  
+    <!-- 根据一组code查询id -->
+	<select id="selDatasByCodes" resultMap="BaseResultMap">
+		select
+		<include refid="Base_Column_List" />
+		from comm_param_type where type_code in (${selList})
+	
+		
+	</select>
+
+</mapper>

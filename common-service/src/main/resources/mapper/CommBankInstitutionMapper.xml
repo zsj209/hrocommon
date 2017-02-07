@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrocloud.common.dao.CommBankInstitutionMapper">
+  <resultMap id="BaseResultMap" type="com.hrocloud.common.model.CommBankInstitutionResp">
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="create_by" jdbcType="INTEGER" property="createBy" />
+    <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
+    <result column="update_by" jdbcType="INTEGER" property="updateBy" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+    <result column="company_id" jdbcType="INTEGER" property="companyId" />
+    <result column="bank_name" jdbcType="VARCHAR" property="bankName" />
+    <result column="bank_cname" jdbcType="VARCHAR" property="bankCname" />
+    <result column="comment" jdbcType="VARCHAR" property="comment" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    id, create_by, create_time, update_by, update_time, company_id, 
+    bank_name, bank_cname, comment
+  </sql>
+  <select id="selectByBankId" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from comm_bank_institution
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+    <select id="selectBanksPage" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from comm_bank_institution
+    <where>
+    <if test="bankInstitution!=null">
+    	<!-- <if test="bankInstitution.id!=null and bankInstitution.id!='' and bankInstitution.id!=0">
+    		and id=#{id,jdbcType=INTEGER}
+    	</if> -->
+    	<if test="bankInstitution.bankName!=null and bankInstitution.bankName!=''">
+    		and bank_name like '%${bankInstitution.bankName}%'
+    	</if>
+    	<if test="bankInstitution.bankCname!=null and bankInstitution.bankCname!=''">
+    		and bank_cname=#{bankCname,jdbcType=VARCHAR}
+    	</if>
+    	<if test="bankInstitution.deleteFlag!=null">
+			AND IFNULL(delete_flag,0)=#{bankInstitution.deleteFlag,jdbcType=INTEGER}
+		</if>
+    </if>
+    </where>
+  </select>
+  
+    <select id="selectBanksByIds" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from comm_bank_institution
+    where id in (${ids})
+  </select>
+  <delete id="deleteBatchByIds">
+    update comm_bank_institution set delete_flag=1
+    where id in (${ids})
+  </delete>
+  <insert id="insertBank" parameterType="com.hrocloud.common.model.CommBankInstitution">
+    insert into comm_bank_institution (id, create_by, create_time, 
+       company_id, bank_name, 
+      bank_cname, comment)
+    values (#{id,jdbcType=INTEGER}, #{createBy,jdbcType=INTEGER}, now(), 
+     #{companyId,jdbcType=INTEGER}, #{bankName,jdbcType=VARCHAR}, 
+      #{bankCname,jdbcType=VARCHAR}, #{comment,jdbcType=VARCHAR})
+  </insert>
+
+  <update id="updateByBankId" parameterType="com.hrocloud.common.model.CommBankInstitution">
+    update comm_bank_institution
+    set update_by = #{updateBy,jdbcType=INTEGER},
+      update_time = now(),
+      bank_name = #{bankName,jdbcType=VARCHAR},
+      bank_cname = #{bankCname,jdbcType=VARCHAR},
+      comment = #{comment,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <select id="selectBankIsExist" parameterType="com.hrocloud.common.model.CommBankInstitution" resultType="java.lang.Integer">
+  	select count(*) from comm_bank_institution
+  	where 
+  	 bank_name = #{bankName,jdbcType=VARCHAR}
+  	 and delete_flag=0
+  </select>
+</mapper>

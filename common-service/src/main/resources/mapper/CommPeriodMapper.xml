@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrocloud.common.dao.CommPeriodMapper">
+  <resultMap id="BaseResultMap" type="com.hrocloud.common.model.CommPeriodResp">
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="create_by" jdbcType="INTEGER" property="createBy" />
+    <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
+    <result column="update_by" jdbcType="INTEGER" property="updateBy" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+    <result column="company_id" jdbcType="INTEGER" property="companyId" />
+   <result column="period_code" jdbcType="VARCHAR" property="periodCode" />
+    <result column="period_year" jdbcType="INTEGER" property="periodYear" />
+    <result column="period_month" jdbcType="VARCHAR" property="periodMonth" />
+    <result column="start_time" jdbcType="TIMESTAMP" property="startTime" />
+    <result column="end_time" jdbcType="TIMESTAMP" property="endTime" />
+    <result column="comment" jdbcType="VARCHAR" property="comment" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    id,create_time, period_code, period_year, <!--  create_by, create_time, update_by, update_time, company_id, -->
+    period_month, start_time, end_time, comment
+  </sql>
+  
+  <!-- 标记是否删除 -->
+  <sql id="Isdelete_Column">
+  	and delete_flag=0
+  </sql>
+  <select id="selectPeriodByColumnPage" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from comm_period
+    where delete_flag=0
+   <if test="commPeriod!=null">
+   		<if test="commPeriod.id!=null and commPeriod.id!='' and commPeriod.id!=0">
+	  		and id=#{commPeriod.id}
+	  	</if>
+	  	<if test="commPeriod.periodCode!=null and commPeriod.periodCode!=''">
+	  		and period_code like '%${commPeriod.periodCode}%'
+	  	</if>
+	  	<if test="commPeriod.companyId!=null and commPeriod.companyId!='' and commPeriod.companyId!=0">
+	  		and company_id=#{commPeriod.companyId}
+	  	</if>
+   </if>
+   order by period_code desc
+  </select>
+  <!-- 根据id获取日期信息 -->
+   <select id="selectPeriodById" parameterType="int" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from comm_period
+  	where id =#{id}
+  </select>
+    <!-- 根据一组id查询 -->
+	<select id="selDataListByIds" resultMap="BaseResultMap">
+		select
+		<include refid="Base_Column_List" />
+		from comm_period where id in (${selList})
+	</select>
+  <delete id="deletePeriod" parameterType="com.hrocloud.common.model.CommPeriod">
+  	update comm_period set delete_flag=1 where id in (${ids})
+  </delete>
+  <insert id="insertPeriod" parameterType="com.hrocloud.common.model.CommPeriod" useGeneratedKeys="true" keyProperty="id">
+    insert into comm_period (id, create_by, create_time, 
+      <if test="companyId!=null and companyId!='' and companyId!=0">
+      	 company_id, 
+      </if>
+     
+      period_code, period_year, period_month, 
+      start_time, end_time, 
+      comment)
+    values (#{id,jdbcType=INTEGER}, #{createBy,jdbcType=INTEGER}, now(), 
+      <if test="companyId!=null and companyId!='' and companyId!=0">
+     	  #{companyId,jdbcType=INTEGER}, 
+       </if>
+      #{periodCode,jdbcType=VARCHAR}, #{periodYear,jdbcType=INTEGER}, #{periodMonth,jdbcType=VARCHAR}, 
+      #{startTime,jdbcType=TIMESTAMP}, #{endTime,jdbcType=TIMESTAMP}, 
+      #{comment,jdbcType=VARCHAR})
+  </insert>
+ 
+  <update id="updatePeriodByPrimaryKey" parameterType="com.hrocloud.common.model.CommPeriod">
+    update comm_period
+    set 
+      update_by = #{updateBy,jdbcType=INTEGER},
+      update_time = now(),
+      <if test="companyId!=null and companyId!='' and companyId!=0">
+      	 company_id = #{companyId,jdbcType=INTEGER},
+      </if>
+     
+      period_code = #{periodCode,jdbcType=VARCHAR},
+      period_year = #{periodYear,jdbcType=INTEGER},
+      period_month = #{periodMonth,jdbcType=VARCHAR},
+      start_time = #{startTime,jdbcType=TIMESTAMP},
+      end_time = #{endTime,jdbcType=TIMESTAMP},
+      comment = #{comment,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <!-- 判断是否存在 -->
+  <select id="queryByPeriodInfoIsExist" parameterType="com.hrocloud.common.model.CommPeriod" resultType="java.lang.Integer">
+  	select count(*) from comm_period 
+  		where period_code=#{periodCode}
+  		 and delete_flag=0
+  		 and company_id = #{companyId,jdbcType=INTEGER}
+  </select>
+  
+</mapper>

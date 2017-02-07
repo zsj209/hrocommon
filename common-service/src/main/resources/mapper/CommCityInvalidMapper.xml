@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrocloud.common.dao.CommCityInvalidMapper">
+	<resultMap id="BaseResultMap" type="com.hrocloud.common.model.CommCityInvalid">
+		<id column="id" jdbcType="INTEGER" property="id" />
+		<result column="create_by" jdbcType="INTEGER" property="createBy" />
+		<result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
+		<result column="update_by" jdbcType="INTEGER" property="updateBy" />
+		<result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+		<result column="company_id" jdbcType="INTEGER" property="companyId" />
+
+		<result column="city_id" jdbcType="INTEGER" property="cityId" />
+		<result column="city_code" jdbcType="VARCHAR" property="cityCode" />
+		<result column="city_name" jdbcType="VARCHAR" property="CityName" />
+		<result column="city_pid" jdbcType="INTEGER" property="cityPid" />
+		<result column="city_pcode" jdbcType="VARCHAR" property="cityPcode" />
+		<result column="comment" jdbcType="VARCHAR" property="comment" />
+
+		<result column="sublist" jdbcType="VARCHAR" property="sublist" />
+		<result column="subnums" jdbcType="INTEGER" property="subnums" />
+		<result column="subvalidnums" jdbcType="INTEGER" property="subvalidnums" />
+		<result column="setstyle" jdbcType="VARCHAR" property="setstyle" />
+	</resultMap>
+<!-- 	<sql id="Base_Column_List">
+		id, create_by, create_time, update_by, update_time,
+		company_id, city_id,
+		comment
+	</sql>
+	<select id="selectCityInvalidById" parameterType="java.lang.Integer"
+		resultMap="BaseResultMap">
+		select
+		<include refid="Base_Column_List" />
+		from comm_city_invalid
+		where id = #{id,jdbcType=INTEGER}
+	</select>
+	<select id="selectCityInvalid" parameterType="com.hrocloud.common.model.CommCityInvalid"
+		resultMap="BaseResultMap">
+		select
+		<include refid="Base_Column_List" />
+		from comm_city_invalid
+		<where>
+			<if test="id!=null and id!=''">
+				and id=#{id,jdbcType=INTEGER}
+			</if>
+			<if test="companyId!=null and companyId!=''">
+				and company_id=#{companyId,jdbcType=INTEGER}
+			</if>
+			<if test="cityId!=null and cityId!=''">
+				and city_id=#{cityId,jdbcType=INTEGER}
+			</if>
+		</where>
+	</select>
+	<delete id="deleteCityVBatchByIds">
+		delete from comm_city_invalid where id in (${ids})
+	</delete>
+	<insert id="addInvalidCity" parameterType="com.hrocloud.common.model.CommCityInvalid">
+		insert into
+		comm_city_invalid (id, create_by,
+		 company_id,
+		city_pid, comment)
+		values (#{id,jdbcType=INTEGER},
+		#{createBy,jdbcType=INTEGER},
+		#{companyId,jdbcType=INTEGER},
+		#{cityPid,jdbcType=INTEGER}, #{comment,jdbcType=VARCHAR})
+	</insert> -->
+	<select id="selectInvalidCityForSet" parameterType="Map" resultMap="BaseResultMap">
+		select *,(case when subnums>0 and subvalidnums>0 and subnums-subvalidnums>0 then 'half'
+		when subnums>0 and subvalidnums>0 and subnums-subvalidnums=0 then 'all'
+		when subnums=0 and selfvalidnums>0 then 'all'
+		else '' end) as setstyle
+		from (
+		select rootcity.id, rootcity.create_by, rootcity.create_time, rootcity.update_by, rootcity.update_time, rootcity.company_id,rootcity.id as city_id,
+		rootcity.city_code+0 as city_code,rootcity.city_name,rootcity.city_pid,ifnull(pcity.city_code,0)+0 as city_pcode,rootcity.comment,
+		(select group_concat('[',rootcity0.id,']' order by rootcity0.city_code separator '') from comm_city_info rootcity0 where rootcity0.city_pid=rootcity.id) sublist,
+		(select count(*) from comm_city_info as rootcity1 where rootcity1.city_pid=rootcity.id) as subnums,
+		(select count(*) from comm_city_info as rootcity2,comm_city_invalid as curcity where rootcity2.id=curcity.city_id and rootcity2.city_pid=rootcity.id
+		and curcity.company_id=#{cur_company_id,jdbcType=INTEGER}) as subvalidnums,
+		(select count(*) from comm_city_invalid as curcity1 where curcity1.city_id=rootcity.id and curcity1.company_id=#{cur_company_id,jdbcType=INTEGER}) as selfvalidnums
+		from comm_city_info as rootcity
+		left join comm_city_info as pcity on rootcity.city_pid=pcity.id
+		where rootcity.company_id=#{root_company_id,jdbcType=INTEGER}) as tempa
+		order by city_pcode,city_code
+	</select>
+	
+	<insert id="saveInvalidCity" parameterType="Map">
+		insert into comm_city_invalid (create_by, create_time, company_id, city_id)
+		select #{userid,jdbcType=INTEGER},#{curdate,jdbcType=TIMESTAMP},#{cur_company_id,jdbcType=INTEGER},id
+		from comm_city_info
+		where company_id=#{root_company_id,jdbcType=INTEGER} and id in
+		<foreach item="item" index="index" collection="cityids"
+			open="(" separator="," close=")">
+			#{item}
+        </foreach>
+        and id not in (select city_id from comm_city_invalid where company_id=#{cur_company_id,jdbcType=INTEGER})
+	</insert>
+	
+	<delete id="deleteNotExistInvalidCity" parameterType="Map">
+		delete from comm_city_invalid
+		where company_id=#{cur_company_id,jdbcType=INTEGER} and city_id not in
+		<foreach item="item" index="index" collection="cityids"
+			open="(" separator="," close=")">
+			#{item}
+        </foreach>
+	</delete>
+	
+	<select id="selectInvalCityListPage" resultMap="BaseResultMap">
+		select oc.city_id as id,oc.city_id, city_code, city_name
+		from comm_city_invalid oc,comm_city_info bc
+		where bc.id=oc.city_id and oc.company_id=#{companyid} and city_type!='01prov'
+		<if test="cityname != null and cityname != ''">
+			and city_name like '%${cityname}%'
+		</if>
+		order by city_code
+	</select>
+
+</mapper>

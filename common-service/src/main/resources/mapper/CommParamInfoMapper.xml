@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrocloud.common.dao.CommParamInfoMapper">
+  <resultMap id="BaseResultMap" type="com.hrocloud.common.dto.CommParamInfoDTO">
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="create_by" jdbcType="INTEGER" property="createBy" />
+    <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
+    <result column="update_by" jdbcType="INTEGER" property="updateBy" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+    <result column="company_id" jdbcType="INTEGER" property="companyId" />
+     <result column="param_code" jdbcType="VARCHAR" property="paramCode" />
+    <result column="param_type" jdbcType="INTEGER" property="paramType" />
+    <result column="param_name" jdbcType="VARCHAR" property="paramName" />
+    <result column="comment" jdbcType="VARCHAR" property="comment" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    id, create_by, create_time, update_by, update_time, company_id,param_code, param_type, param_name, 
+    comment
+  </sql>
+  
+  <!-- 根据一组id查询 -->
+	<select id="selDataListByCodes" resultMap="BaseResultMap">
+		select
+		<include refid="Base_Column_List" />
+		from comm_param_info
+		<if test="types==2">
+			 where param_type in (${selList})
+		</if>
+		<if test="types==1">
+			 where param_code in (${selList})
+		</if>
+		
+		<!-- <foreach collection="list" open="(" close=")" separator=","	item="id"> 
+			#{id}  
+		</foreach> -->
+	</select>
+
+  <sql id="IsDelete_Column">
+  	and delete_flag=0
+  </sql>
+  <select id="selectParamInfoByColumn"  resultMap="BaseResultMap"><!-- parameterType="com.hrocloud.common.model.CommParamInfo" -->
+    select 
+    <include refid="Base_Column_List" />
+    from comm_param_info
+    where delete_flag=0
+    <if test="commParamInfo.id!=null and commParamInfo.id!='' and commParamInfo.id!=0">
+  		and id=#{commParamInfo.id}
+  	</if>
+  	<if test="commParamInfo.companyId!=null and commParamInfo.companyId!='' and commParamInfo.companyId!=0">
+  		and company_id=#{commParamInfo.companyId}
+  	</if>
+  	<if test="commParamInfo.paramCode!=null and commParamInfo.paramCode!=''">
+  		and param_code =#{commParamInfo.paramCode}
+  	</if>
+  	<if test="commParamInfo.paramName!=null and commParamInfo.paramName!=''">
+  		and param_name like '%${commParamInfo.paramName}%'
+  	</if>
+  	<if test="commParamInfo.paramType!=null and commParamInfo.paramType!=''">
+  		and param_type=#{commParamInfo.paramType}
+  	</if>
+  </select>
+   <select id="selectParamInfoPage" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from comm_param_info
+    where delete_flag=0
+   <if test="commParamInfo.id!=null and commParamInfo.id!='' and commParamInfo.id!=0">
+  		and id=#{commParamInfo.id}
+  	</if>
+  	<if test="commParamInfo.companyId!=null and commParamInfo.companyId!='' and commParamInfo.companyId!=0">
+  		and company_id=#{commParamInfo.companyId}
+  	</if>
+  	<if test="commParamInfo.paramCode!=null and commParamInfo.paramCode!=''">
+  		and param_code =#{commParamInfo.paramCode}
+  	</if>
+  	<if test="commParamInfo.paramName!=null and commParamInfo.paramName!=''">
+  		and param_name like '%${commParamInfo.paramName}%'
+  	</if>
+  	<if test="commParamInfo.paramType!=null and commParamInfo.paramType!=''">
+  		and param_type=#{commParamInfo.paramType}
+  	</if>
+ 
+  </select>
+  <!-- 根据id查询该对象 -->
+   <select id="selectParamInfoById" parameterType="int" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from comm_param_info
+	where id=#{id} <!-- and delete_flag=0 -->
+  </select>
+  
+  <delete id="deleteParamInfo" >
+    update comm_param_info set delete_flag=1 where id in (${ids})
+  </delete>
+  <delete id="deleteParamInfoByType">
+   delete from comm_param_info where param_type in (${ids})
+  </delete>
+  <insert id="insertParamInfo" parameterType="com.hrocloud.common.model.CommParamInfo"  useGeneratedKeys="true" keyProperty="id">
+    insert into comm_param_info (id, create_by, create_time, 
+      company_id, param_code,
+      param_type, param_name, delete_flag, 
+      comment)
+    values (#{id,jdbcType=INTEGER}, #{createBy,jdbcType=INTEGER}, now(), 
+    #{companyId,jdbcType=INTEGER}, 
+      #{paramCode,jdbcType=VARCHAR},#{paramType,jdbcType=INTEGER}, #{paramName,jdbcType=VARCHAR}, 0, 
+      #{comment,jdbcType=VARCHAR})
+  </insert>
+ 	
+  <update id="updateParamInfoByPrimaryKey" parameterType="com.hrocloud.common.model.CommParamInfo">
+    update comm_param_info
+    set update_by = #{updateBy,jdbcType=INTEGER},
+      update_time = now(),
+      company_id = #{companyId,jdbcType=INTEGER},
+      param_code= #{paramCode,jdbcType=VARCHAR},
+      param_type = #{paramType,jdbcType=INTEGER},
+      param_name = #{paramName,jdbcType=VARCHAR},
+      comment = #{comment,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  
+   <!-- 判断是否存在 -->
+  <select id="queryByParamInfoInfoIsExist" parameterType="com.hrocloud.common.model.CommParamInfo" resultType="java.lang.Integer">
+  	select count(*) from comm_param_info 
+  		where param_code= #{paramCode}
+  		 and delete_flag=0
+  		 <!-- param_name=#{paramName}
+  		 and (company_id=100 or company_id=#{companyId})
+  		
+  		 and param_type= #{paramType}
+  		 and -->
+  </select>
+</mapper>

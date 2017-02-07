@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:p="http://www.springframework.org/schema/p"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+    http://www.springframework.org/schema/beans/spring-beans.xsd
+    http://www.springframework.org/schema/context
+    http://www.springframework.org/schema/context/spring-context.xsd
+    http://www.springframework.org/schema/tx
+    http://www.springframework.org/schema/tx/spring-tx.xsd">
+
+  
+
+
+    <!-- <context:component-scan base-package="com.hrocloud.user.service" /> -->
+    <!-- 阿里 druid数据库连接池 -->
+    <bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource">
+        <property name="driverClassName" value="com.mysql.jdbc.Driver"/>
+        <property name="url" value="${jdbc.url}"/>
+        <property name="username" value="${jdbc.username}"/>
+        <property name="password" value="${jdbc.password}"/>
+        <property name="filters" value="config"/>
+        <property name="initialSize" value="10"/>
+        <property name="minIdle" value="10"/>
+        <property name="maxActive" value="60"/>
+        <property name="maxWait" value="1000"/>
+        <property name="testOnBorrow" value="false"/>
+        <property name="testWhileIdle" value="true"/>
+        <property name="timeBetweenEvictionRunsMillis" value="10000"/>
+        <property name="minEvictableIdleTimeMillis" value="300000"/>
+    </bean>
+
+   <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+        <property name="order" value="1"/>
+        <property name="ignoreUnresolvablePlaceholders" value="true"/>
+        <property name="locations">
+            <list>
+                <value>file:src/main/resources/config.properties</value>
+                <value>classpath:config.properties</value>
+            </list>
+        </property>
+    </bean>
+
+    <!-- mybatis文件配置，扫描所有mapper文件 -->
+
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="dataSource"/>
+        <property name="mapperLocations" value="classpath*:mapper/*.xml"/>
+         <property name="configLocation" value="classpath:mybatis-config.xml" />
+    </bean>
+    <!-- configLocation为mybatis属性 mapperLocations为所有mapper -->
+
+    <!-- spring与mybatis整合配置，扫描所有dao -->
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer"
+          p:basePackage="com.hrocloud.*.dao" p:sqlSessionFactoryBeanName="sqlSessionFactory"/>
+
+    <!-- 对数据源进行事务管理 -->
+    <tx:annotation-driven transaction-manager="transactionManager"/>
+    <bean id="transactionManager"
+          class="org.springframework.jdbc.datasource.DataSourceTransactionManager"
+          p:dataSource-ref="dataSource">
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+
+    <!-- 扫描文件（自动将service层注入） -->
+    <context:component-scan base-package="com.hrocloud.common.service"/>
+    
+    <!-- 另一种配置扫描文件（自动将service层注入）
+    <context:component-scan base-package="com.hrocloud.common.service" use-default-filters="false">
+    	//此处必须配置类全名
+    	<context:include-filter type="assignable" expression="com.hrocloud.common.service.CommCityInvalidServiceImpl"/>
+    	<context:include-filter type="assignable" expression="com.hrocloud.common.service.CommCityInvalidAgwServiceImpl"/>
+    </context:component-scan>
+     -->
+</beans>

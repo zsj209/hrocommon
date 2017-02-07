@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrocloud.common.dao.CommCalendarMapper">
+  <resultMap id="BaseResultMap" type="com.hrocloud.common.model.CommCalendarResp">
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="create_by" jdbcType="INTEGER" property="createBy" />
+    <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
+    <result column="update_by" jdbcType="INTEGER" property="updateBy" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+    <result column="company_id" jdbcType="INTEGER" property="companyId" />
+    <result column="cal_code" jdbcType="INTEGER" property="calCode" />
+    <result column="cal_date" jdbcType="TIMESTAMP" property="calDate" />
+    <result column="cal_type" jdbcType="VARCHAR" property="calType" />
+    <result column="comment" jdbcType="VARCHAR" property="comment" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    id, create_by, create_time, update_by, update_time, company_id, 
+    cal_code, cal_date, cal_type, comment
+  </sql>
+ 
+	<!-- 标记是否删除 -->
+	<sql id="Isdelete_Column">
+		and delete_flag=0
+	</sql>
+
+  	<select id="selectCalendarByColumnPage"	resultMap="BaseResultMap">
+		select
+		<include refid="Base_Column_List" />
+		from comm_calendar
+		where delete_flag=0
+		<if test="commCalendar!=null">
+			<if test="commCalendar.id!=null and commCalendar.id!='' and commCalendar.id!=0">
+				and id=#{commCalendar.id}
+			</if>
+			<if test="commCalendar.calCode!=null and commCalendar.calCode!=''">
+				and cal_code=#{commCalendar.calCode}
+			</if>
+			<if test="commCalendar.companyId!=null and commCalendar.companyId!='' and commCalendar.companyId!=0">
+				and company_id=#{commCalendar.companyId}
+			</if>
+		</if>
+		order by cal_code desc,cal_date desc
+	</select>
+  
+ <delete id="deleteCalendar">
+		update comm_calendar set delete_flag=1 where id in (${ids})
+	</delete>
+  	 <!-- 根据id获取日期信息 -->    
+   <select id="selectCalendarById" parameterType="int" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from comm_calendar
+  	where id =#{id} 
+  </select>
+  <!-- 根据一组id查询 -->
+	<select id="selDataListByIds"
+		resultMap="BaseResultMap">
+		select
+		<include refid="Base_Column_List" />
+		from comm_calendar where id in (${selList})
+	</select>
+  <insert id="insertCalendar" parameterType="com.hrocloud.common.model.CommCalendar">
+    insert into comm_calendar (id, create_by, create_time, 
+    <if test="companyId!=null and companyId!='' and companyId!=0">
+    	company_id,
+    </if>
+       cal_code, 
+      cal_date, cal_type, comment
+      )
+    values (#{id,jdbcType=INTEGER}, #{createBy,jdbcType=INTEGER},now(), 
+     <if test="companyId!=null and companyId!='' and companyId!=0">
+     	 #{companyId,jdbcType=INTEGER}, 
+     </if>
+     #{calCode,jdbcType=INTEGER}, 
+      #{calDate,jdbcType=TIMESTAMP}, #{calType,jdbcType=VARCHAR}, #{comment,jdbcType=VARCHAR}
+      )
+  </insert>
+
+  <update id="updateCalendarByPrimaryKey" parameterType="com.hrocloud.common.model.CommCalendar">
+    update comm_calendar
+    set update_by = #{updateBy,jdbcType=INTEGER},
+      update_time = now(),
+      <if test="companyId!=null and companyId!='' and companyId!=0">
+      	 company_id = #{companyId,jdbcType=INTEGER},
+      </if>
+      cal_code = #{calCode,jdbcType=INTEGER},
+      cal_date = #{calDate,jdbcType=TIMESTAMP},
+      cal_type = #{calType,jdbcType=VARCHAR},
+      comment = #{comment,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+    <!-- 判断是否存在 -->
+  <select id="queryByCalendarInfoIsExist" parameterType="com.hrocloud.common.model.CommCalendar"
+		resultType="java.lang.Integer">
+		select count(*) from comm_calendar
+		where cal_code=#{calCode}
+		and cal_date = #{calDate,jdbcType=TIMESTAMP}
+		and company_id = #{companyId,jdbcType=INTEGER}
+		and delete_flag=0
+	
+	</select>
+</mapper>
